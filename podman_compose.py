@@ -426,7 +426,7 @@ async def assert_volume(compose, mount_dict):
         driver_opts = vol.get("driver_opts", {})
         for opt, value in driver_opts.items():
             args.extend(["--opt", f"{opt}={value}"])
-        args.append(vol_name)34
+        args.append(vol_name)
         await compose.podman.output([], "volume", args)
         _ = (await compose.podman.output([], "volume", ["inspect", vol_name])).decode("utf-8")
 
@@ -2973,7 +2973,9 @@ async def compose_down(compose: PodmanCompose, args):
     if excluded:
         return
     for pod in compose.pods:
-        await compose.podman.run([], "pod", ["rm", pod["name"]])
+        # return code 0 if command executes successfully
+        if 0 == await compose.podman.run([], "pod", ["stop", pod["name"]]):
+            await compose.podman.run([], "pod", ["rm", pod["name"]])
     for network in await compose.podman.network_ls():
         await compose.podman.run([], "network", ["rm", network])
 
